@@ -7,7 +7,7 @@ A unified development plugin for Claude Code with essential commands, skills, an
 This is a single, comprehensive plugin (`ce`) that provides:
 
 - **8 Commands** - Quick workflows accessible as `/ce:test`, `/ce:explain`, `/ce:commit`, etc.
-- **15 Skills** - Reusable development patterns accessed via `@skills/ce:writing-tests`, `@skills/ce:systematic-debugging`, etc.
+- **15 Skills** - Reusable development patterns accessed via `ce:writing-tests`, `ce:systematic-debugging`, etc.
 - **3 Agents** - Expert AI personas invoked as `@ce:architect`, `@ce:code-reviewer`, `@ce:documentation-writer`
 - **Session Hooks** - Automatic project configuration on startup
 - **Reference Templates** - ADR, PRD, and technical design templates
@@ -48,7 +48,7 @@ claude
 /ce:explain README.md
 
 # Use a skill
-@skills/ce:writing-tests
+ce:writing-tests
 
 # Invoke an agent
 @ce:architect
@@ -71,7 +71,7 @@ Quick workflows for everyday development tasks, accessed with `/ce:` prefix:
 
 ### Skills
 
-Reusable development patterns, accessed with `@skills/ce:` prefix:
+Reusable development patterns, accessed with `ce:` prefix:
 
 **Testing & Quality:**
 - `ce:writing-tests` - Testing Trophy methodology, behavior-focused tests
@@ -126,7 +126,7 @@ Expert AI personas for complex work, accessed with `@ce:` prefix:
 ```bash
 /ce:test
 # If complex, escalate:
-@skills/ce:systematic-debugging
+ce:systematic-debugging
 ```
 
 **Review before merge:**
@@ -142,7 +142,7 @@ git add .
 ```bash
 /ce:optimize src/components/DataTable.tsx
 # For deep analysis:
-@skills/ce:optimizing-performance
+ce:optimizing-performance
 ```
 
 **Plan a feature:**
@@ -150,14 +150,14 @@ git add .
 ```bash
 @ce:architect I need to add real-time notifications. We have 10k concurrent users.
 # Then create a plan:
-@skills/ce:writing-plans
+ce:writing-plans
 ```
 
 **Clean up legacy code:**
 
 ```bash
 /ce:explain src/legacy/payment-processor.js
-@skills/ce:refactoring-code
+ce:refactoring-code
 ```
 
 ### Understanding the System
@@ -165,7 +165,7 @@ git add .
 **Commands vs Skills vs Agents:**
 
 - **Commands** (`/ce:test`, `/ce:review`) are quick keyboard shortcuts for routine tasks
-- **Skills** (`@skills/ce:writing-tests`) are reusable workflows that guide specific development patterns
+- **Skills** (`ce:writing-tests`) are reusable workflows that guide specific development patterns
 - **Agents** (`@ce:architect`) are expert personas for complex, multi-step work
 
 Use commands for quick actions, skills for following proven patterns, and agents when you need specialized expertise.
@@ -205,7 +205,7 @@ description: What this skill does and when to use it
 Your skill workflow here.
 ```
 
-This will be accessible as `@skills/ce:my-skill`.
+This will be accessible as `ce:my-skill`.
 
 ### Creating Your Own Agent
 
@@ -234,7 +234,7 @@ This will be accessible as `@ce:my-agent`.
         ├── .claude-plugin/
         │   └── plugin.json       # Plugin metadata
         ├── commands/             # 8 commands (/ce:test, /ce:explain, etc.)
-        ├── skills/               # 15 skills (@skills/ce:writing-tests, etc.)
+        ├── skills/               # 15 skills (ce:writing-tests, etc.)
         ├── agents/               # 3 agents (@ce:architect, etc.)
         ├── hooks/                # Session automation
         └── references/           # Document templates (ADR, PRD, Technical Design)
@@ -253,7 +253,7 @@ This will be accessible as `@ce:my-agent`.
 **Skills are for learning:** Invoke a skill to understand a pattern, then apply it.
 
 ```bash
-@skills/ce:writing-tests
+ce:writing-tests
 # Follow the guidance to write tests
 ```
 
