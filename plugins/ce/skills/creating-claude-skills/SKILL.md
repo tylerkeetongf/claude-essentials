@@ -1,6 +1,6 @@
 ---
 name: creating-claude-skills
-description: Applies best practices when authoring Claude skills, including proper YAML frontmatter structure, effective descriptions, progressive disclosure patterns, and testing strategies. Use when creating or modifying SKILL.md files.
+description: Best practices for authoring SKILL.md files with proper frontmatter and descriptions
 version: 1.0.0
 ---
 

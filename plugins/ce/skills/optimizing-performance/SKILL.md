@@ -1,6 +1,6 @@
 ---
 name: optimizing-performance
-description: Use when investigating slow execution, high memory usage, unnecessary computation, or large payload sizes - measurement-driven approach that balances performance gains against code complexity, prioritizing optimizations that simplify code while improving speed
+description: Measure-first performance optimization - balance gains against complexity
 ---
 
 # Optimizing Performance

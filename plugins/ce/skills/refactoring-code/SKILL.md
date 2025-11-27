@@ -1,6 +1,6 @@
 ---
 name: refactoring-code
-description: Use when improving code structure, extracting reusable patterns, eliminating duplication, or simplifying complex logic - preserves behavior while enhancing maintainability through systematic refactoring process with behavior-driven test verification
+description: Improve code structure while preserving behavior with test verification
 ---
 
 # Refactoring Code

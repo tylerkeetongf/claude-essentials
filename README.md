@@ -6,8 +6,8 @@ A unified development plugin for Claude Code with essential commands, skills, an
 
 This is a single, comprehensive plugin (`ce`) that provides:
 
-- **8 Commands** - Quick workflows accessible as `/ce:test`, `/ce:explain`, `/ce:commit`, etc.
-- **15 Skills** - Reusable development patterns accessed via `ce:writing-tests`, `ce:systematic-debugging`, etc.
+- **7 Commands** - Quick workflows accessible as `/ce:test`, `/ce:explain`, `/ce:commit`, etc.
+- **12 Skills** - Reusable development patterns accessed via `ce:writing-tests`, `ce:systematic-debugging`, etc.
 - **3 Agents** - Expert AI personas invoked as `@ce:architect`, `@ce:code-reviewer`, `@ce:documentation-writer`
 - **Session Hooks** - Automatic project configuration on startup
 - **Reference Templates** - ADR, PRD, and technical design templates
@@ -62,7 +62,6 @@ Quick workflows for everyday development tasks, accessed with `/ce:` prefix:
 
 - `/ce:test [command]` - Run tests and analyze failures
 - `/ce:explain <target>` - Break down code or concepts
-- `/ce:quick-fix` - Fix IDE diagnostics and linting errors
 - `/ce:debug` - Launch systematic debugging
 - `/ce:optimize <target>` - Find performance bottlenecks
 - `/ce:refactor <target>` - Improve code quality
@@ -75,12 +74,10 @@ Reusable development patterns, accessed with `ce:` prefix:
 
 **Testing & Quality:**
 - `ce:writing-tests` - Testing Trophy methodology, behavior-focused tests
-- `ce:testing-anti-patterns` - Prevent common testing mistakes
 - `ce:verification-before-completion` - Verify before claiming success
 
 **Debugging & Problem Solving:**
 - `ce:systematic-debugging` - Four-phase debugging framework
-- `ce:root-cause-tracing` - Trace bugs to their source
 - `ce:condition-based-waiting` - Replace race conditions with polling
 
 **Code Quality:**
@@ -95,7 +92,6 @@ Reusable development patterns, accessed with `ce:` prefix:
 **Meta Skills:**
 - `ce:creating-claude-skills` - Best practices for authoring skills
 - `ce:dispatching-parallel-agents` - Investigate independent problems concurrently
-- `ce:subagent-driven-development` - Execute plans with fresh subagents per task
 - `ce:visualizing-with-mermaid` - Create professional technical diagrams
 
 ### Agents
@@ -114,8 +110,8 @@ Expert AI personas for complex work, accessed with `@ce:` prefix:
 
 ### Hooks
 
-- Session startup automation
-- Project-specific configurations
+- **Session startup** - Loads user instructions and project context automatically
+- **Notifications** - Cross-platform alerts when Claude needs input (macOS + Linux)
 
 ## Usage Examples
 
@@ -267,7 +263,7 @@ ce:writing-tests
 @ce:architect We need OAuth2 + JWT authentication for a React SPA with Node backend. 50k users.
 ```
 
-**Check diagnostics:** Use `/ce:quick-fix` before committing to clean up lint errors and type issues.
+**Run tests first:** Use `/ce:test` before committing to catch issues early.
 
 ## Contributing
 

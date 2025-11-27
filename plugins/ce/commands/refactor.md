@@ -14,17 +14,15 @@ First, determine what code to refactor:
 
 **If `$ARGUMENTS` is provided:**
 
-- Use the provided file path, pattern, or target directly
+- Use the provided file path, pattern, or user instructions directly
 
 **If `$ARGUMENTS` is empty:**
 
-- Run `git diff` to get unstaged changes
 - If there are unstaged changes, use those as the refactoring target
-- If there are no unstaged changes, ask the user what they want to refactor
+- If no unstaged changes, use the following command to detect the set of changed files: `git diff --name-only $([ "$(git rev-parse --abbrev-ref HEAD)" = "main" ] && echo "HEAD^" || echo "main...HEAD")`
 
-Once you have the target, invoke the refactor-specialist agent using the Task tool with:
+Once you have the target, invoke the ce:refactoring-code skill using the Skills tool with:
 
-- subagent_type: "refactor-specialist"
 - A detailed prompt that includes:
   - What code to refactor (file paths, function names, or the diff of unstaged changes)
   - Any specific focus areas mentioned by the user

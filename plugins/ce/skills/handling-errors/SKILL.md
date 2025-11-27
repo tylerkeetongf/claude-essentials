@@ -1,6 +1,6 @@
 ---
 name: handling-errors
-description: Applies software engineering error handling best practices across TypeScript/React, Python, and Go. Use when implementing error boundaries, adding try-catch blocks, handling async errors, or reviewing error handling code. Prevents anti-patterns like error hiding, swallowing exceptions, and returning booleans for error conditions.
+description: Error handling best practices - no hiding, no swallowing, no boolean returns
 ---
 
 # Handling Errors
