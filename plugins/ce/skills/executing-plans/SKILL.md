@@ -1,149 +1,202 @@
 ---
 name: executing-plans
-description: Execute implementation plans via batch execution with human review or subagent dispatch with automated code review gates
+description: Executes implementation plans autonomously with wave-based parallel subagents. Analyzes task dependencies, parallelizes independent work, auto-recovers from errors, and verifies at completion.
 ---
 
 # Executing Plans
 
-Load plan, review critically, execute tasks with review checkpoints.
+Load plan, analyze dependencies, execute in parallel waves, verify at completion.
 
-**Core principle:** Never execute blindly. Review plans first, verify as you go, stop when blocked.
+**Core principle:** Autonomous execution. Run to completion, only stop for true blockers.
 
-## Two Execution Modes
+## Plan Loading
 
-### Batch Mode (Human Review)
-- Execute 3 tasks, pause for human feedback
-- Best when: Human wants oversight, tasks may need adjustment
-- Review: Human reviews between batches
+Identify and parse the plan:
 
-### Subagent Mode (Automated Review)
-- Dispatch fresh subagent per task, code-reviewer between tasks
-- Best when: Tasks are independent, want continuous progress
-- Review: Automated code review after each task
+**Custom plan files** (explicit path):
+- User provides path like `./YYYY-MM-DD-feature-PLAN.md`
+- Parse `### Task N:` sections
+- Extract `**Files:**` blocks for dependency analysis
+- Extract `Run:` commands for verification
 
-**Choose batch mode by default.** Use subagent mode when explicitly requested or when tasks are clearly independent and well-specified.
+**Native plan-mode** (current session):
+- Plan is already in the conversation context from plan mode
+- No need to search `~/.claude/plans/` - that would risk loading stale plans from other sessions
+- Parse the plan content directly from context
+- Parse numbered lists, checklists, or markdown sections as tasks
+- Infer file targets from task descriptions
 
-## The Process
+Create TodoWrite with all parsed tasks before execution.
 
-### Step 1: Load and Review Plan
+## Dependency Analysis
 
-1. Read plan file
-2. Review critically - identify questions or concerns
-3. If concerns: Raise them before starting
-4. Create TodoWrite with all tasks
-5. Proceed with chosen execution mode
+Analyze file overlap to group tasks into execution waves.
 
-### Step 2: Execute Tasks
+**Tasks are independent (same wave) when:**
+- No overlapping file paths (create/modify/test)
+- Different subsystems (different top-level directories)
+- No explicit ordering in plan
 
-#### Batch Mode
+**Tasks depend on each other (sequential waves) when:**
+- Task A modifies a file Task B creates
+- Task A imports from Task B's output
+- Task A tests functionality Task B implements
+- Plan explicitly states ordering
 
-For each task in batch (default: 3 tasks):
-1. Mark as in_progress
-2. Follow each step exactly
-3. Run verifications as specified
-4. Mark as completed
+**Example wave computation:**
+```
+Task 1: Create src/utils/formatter.ts
+Task 2: Create src/utils/validator.ts
+Task 3: Modify src/api/handler.ts (imports formatter, validator)
+Task 4: Create tests/api/handler.test.ts
 
-When batch complete:
-- Show what was implemented
-- Show verification output
-- Say: "Ready for feedback."
+Wave 1: [Task 1, Task 2]  <- parallel, no overlap
+Wave 2: [Task 3]          <- depends on wave 1
+Wave 3: [Task 4]          <- depends on wave 2
+```
 
-Based on feedback:
-- Apply changes if needed
-- Execute next batch
-- Repeat until complete
+If dependency analysis is unclear, ask before proceeding.
 
-#### Subagent Mode
+## Wave Execution
 
-For each task:
+For each wave, dispatch all tasks in parallel using multiple Task tool calls in a single message:
 
-**Dispatch implementation subagent:**
+```
+# Wave 1 - dispatch simultaneously
+Task tool (general-purpose):
+  description: "Implement Task 1: Create formatter utility"
+  prompt: |
+    You are implementing Task 1 from [plan-file].
+
+    Read the task details. Your job:
+    1. Implement exactly what the task specifies
+    2. Write tests if task includes them
+    3. Run verification commands from the plan
+    4. Commit your work with descriptive message
+
+    Scope: src/utils/formatter.ts only
+    Constraints: Do NOT modify files outside your scope
+
+    Report back:
+    - What you implemented
+    - Files changed
+    - Verification output
+    - Any issues encountered
+
+Task tool (general-purpose):
+  description: "Implement Task 2: Create validator utility"
+  prompt: |
+    You are implementing Task 2 from [plan-file].
+    [same structure, different scope]
+```
+
+Wait for all parallel tasks to complete. Mark completed in TodoWrite. Proceed to next wave.
+
+**Subagent prompt requirements:**
+- Specific scope (which files)
+- Clear constraints (stay in scope)
+- Expected report format
+- Plan file reference for context
+
+## Auto-Recovery
+
+When a subagent reports failure, classify and respond:
+
+**Recoverable errors** - dispatch fix subagent:
+- Test failures
+- Type errors
+- Lint issues
+- Build errors with clear cause
+
 ```
 Task tool (general-purpose):
-  description: "Implement Task N: [task name]"
+  description: "Fix Task N errors"
   prompt: |
-    You are implementing Task N from [plan-file].
+    Task N from [plan-file] failed with:
 
-    Read that task carefully. Your job is to:
-    1. Implement exactly what the task specifies
-    2. Write tests (following TDD if task says to)
-    3. Verify implementation works
-    4. Commit your work
-    5. Report back
+    [error output]
 
-    Work from: [directory]
+    Files involved: [list]
 
-    Report: What you implemented, what you tested, test results, files changed, any issues
+    Fix the errors and verify the fix works.
+    Commit when resolved.
+
+    Report: What caused it, what you fixed, verification result
 ```
 
-**Dispatch code-reviewer subagent:**
+**True blockers** - stop and ask:
+- Missing dependencies that can't be inferred
+- Ambiguous instructions
+- Security concerns (secrets, unsafe operations)
+- Circular dependencies
+- Same error failing 2+ times after fix attempts
+
+When stopped, report what was completed and ask for guidance.
+
+## Final Verification
+
+After all waves complete:
+
+1. **Run full test suite** (not just individual task tests)
+2. **Run build/compile** to verify everything integrates
+3. **Run linter** to catch remaining issues
+
+4. **Dispatch code-reviewer for comprehensive review:**
 ```
-Task tool (code-reviewer):
-  Review the changes made by the previous subagent
+Task tool (ce:code-reviewer):
+  description: "Review complete implementation"
+  prompt: |
+    Review the entire implementation from [plan-file].
 
-  WHAT_WAS_IMPLEMENTED: [from subagent's report]
-  PLAN_OR_REQUIREMENTS: Task N from [plan-file]
-  BASE_SHA: [commit before task]
-  HEAD_SHA: [current commit]
-  DESCRIPTION: [task summary]
+    Compare current state against main branch (or pre-plan state).
+
+    Assess:
+    - All plan requirements met
+    - Architecture alignment
+    - Cross-cutting concerns (error handling, logging, security)
+    - Test coverage adequate
+    - Merge readiness
+
+    Provide: Summary, any critical issues, recommendations
 ```
 
-**Apply review feedback:**
-- Fix Critical issues immediately
-- Fix Important issues before next task
-- Note Minor issues
-- Dispatch follow-up subagent if fixes needed
+5. **Present summary and options:**
+   - Implementation complete: [summary]
+   - Tests: [pass/fail count]
+   - Review findings: [summary]
+   - Options: Create PR / Commit to branch / Address findings first
 
-Mark task complete, move to next task.
+## When to Stop
 
-### Step 3: Final Review
+**Stop and ask for:**
+- Ambiguous plan instructions that can't be inferred
+- Security concerns (secrets in code, unsafe operations)
+- Circular dependencies that can't be resolved
+- Repeated auto-recovery failures (same error 2+ times)
+- Missing critical information (no test command, no build command)
 
-**Batch mode:** Human reviews final state
-
-**Subagent mode:** Dispatch final code-reviewer:
-- Reviews entire implementation
-- Checks all plan requirements met
-- Validates overall architecture
-
-### Step 4: Complete Development
-
-After all tasks complete and verified:
-- Verify all tests pass
-- Present options for creating PR or committing
-- Execute the chosen option
-
-## When to Stop and Ask
-
-**STOP executing immediately when:**
-- Hit a blocker (missing dependency, test fails, instruction unclear)
-- Plan has critical gaps
-- You don't understand an instruction
-- Verification fails repeatedly
-
-**Ask for clarification rather than guessing.**
-
-## Red Flags
-
-**Never:**
-- Execute without reviewing plan first
-- Skip verifications
-- Proceed with unfixed Critical issues
-- Guess when blocked
-
-**Subagent mode specific:**
-- Never dispatch multiple implementation subagents in parallel (conflicts)
-- Never skip code review between tasks
-- If subagent fails, dispatch fix subagent with specific instructions (don't fix manually)
+**Do NOT stop for:**
+- Fixable test failures (auto-recover)
+- Type errors (auto-recover)
+- Style/lint issues (auto-recover)
+- Minor review suggestions (note and continue)
+- Warnings that don't block execution
 
 ## Quick Reference
 
-| Mode | Review By | Best For | Overhead |
-|------|-----------|----------|----------|
-| Batch | Human | Needs oversight, uncertain plan | Lower |
-| Subagent | Automated | Independent tasks, well-specified | Higher |
+| Aspect | Approach |
+|--------|----------|
+| Parallelization | Independent tasks in same wave |
+| Review timing | Single final review at completion |
+| Human checkpoints | None until final verification |
+| Plan formats | Custom PLAN.md files or current session plan-mode |
+| Error handling | Auto-recover, stop only for blockers |
 
 ## Integration
 
 **Required:** `writing-plans` creates plans this skill executes
 
-**Complementary:** `writing-tests` for TDD during task execution
+**Complementary:**
+- `writing-tests` for TDD during task execution
+- `verification-before-completion` for final verification patterns
+- `dispatching-parallel-agents` for parallel dispatch patterns
