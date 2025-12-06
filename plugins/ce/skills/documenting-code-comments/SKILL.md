@@ -1,6 +1,6 @@
 ---
-name: code-comment-guidelines
-description: Standards for writing self-documenting code and best practices for when to write (and avoid) code comments. Load this skill when auditing or improving inline code documentation.
+name: documenting-code-comments
+description: Standards for writing self-documenting code and best practices for when to write (and avoid) code comments. Use when auditing, cleaning up, or improving inline code documentation.
 ---
 
 # Code Comment Guidelines

@@ -1,6 +1,6 @@
 ---
 name: systematic-debugging
-description: Four-phase debugging framework with root cause tracing - understand the source before proposing fixes
+description: Four-phase debugging framework with root cause tracing - understand the source before proposing fixes. Use when investigating bugs, errors, unexpected behavior, or failed tests.
 ---
 
 # Systematic Debugging

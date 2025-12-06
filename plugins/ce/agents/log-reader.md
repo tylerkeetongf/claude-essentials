@@ -26,7 +26,7 @@ Before diving in, understand what you're looking for:
 Invoke the reading-logs skill for detailed techniques and patterns:
 
 ```
-Skill(skill="ce:reading-logs")
+Skill(ce:reading-logs)
 ```
 
 This provides:

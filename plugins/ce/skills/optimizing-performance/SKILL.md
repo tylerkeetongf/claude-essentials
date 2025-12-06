@@ -1,6 +1,6 @@
 ---
 name: optimizing-performance
-description: Measure-first performance optimization - balance gains against complexity
+description: Measure-first performance optimization - balance gains against complexity. Use when addressing slow code, profiling performance issues, or evaluating optimization trade-offs.
 ---
 
 # Optimizing Performance

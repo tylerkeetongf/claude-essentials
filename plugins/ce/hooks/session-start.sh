@@ -104,7 +104,7 @@ For each skill below, state: [skill-name] - YES/NO - [reason]
 Available skills:
 ${SKILLS_LIST}
 Step 2 - ACTIVATE (do this immediately after Step 1):
-IF any skills are YES: Use Skill(skill-name) tool for EACH relevant skill NOW
+IF any skills are YES: Use Skill(<skill-name>) tool for EACH relevant skill NOW
 IF no skills are YES: State \"No skills needed\" and proceed
 
 Step 3 - IMPLEMENT:

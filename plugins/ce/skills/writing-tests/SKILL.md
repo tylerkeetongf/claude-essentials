@@ -127,7 +127,7 @@ wait_for(lambda: result == expected)
 - Tests timeout when run in parallel
 - Waiting for async operations to complete
 
-**Delegate to skill:** When you encounter these patterns, invoke `Skill(skill="ce:condition-based-waiting")` for detailed guidance on implementing proper condition polling and fixing flaky tests.
+**Delegate to skill:** When you encounter these patterns, invoke `Skill(ce:condition-based-waiting)` for detailed guidance on implementing proper condition polling and fixing flaky tests.
 
 ## Assertion Strategy
 

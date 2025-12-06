@@ -1,6 +1,6 @@
 ---
-name: markdown-documentation-guidelines
-description: Best practices for writing comprehensive technical documentation in markdown. Covers structure, progressive disclosure, file organization, and quality standards. Load this skill when creating README files, API docs, architecture docs, or any markdown documentation.
+name: documenting-systems
+description: Best practices for writing comprehensive technical documentation in markdown. Covers structure, progressive disclosure, file organization, and quality standards. Use when creating README files, API docs, architecture docs, or any markdown documentation.
 ---
 
 # Markdown Documentation Guidelines
@@ -214,7 +214,7 @@ Use for structured data with 3+ attributes. Keep tables scannable.
 
 ### Diagrams
 
-Use Mermaid skill `Skill(skill="ce:visualizing-with-mermaid")` for flows:
+Use Mermaid skill `Skill(ce:visualizing-with-mermaid)` for flows:
 
 ```mermaid
 sequenceDiagram

@@ -1,6 +1,6 @@
 ---
 name: condition-based-waiting
-description: Fixes flaky tests by replacing arbitrary timeouts with condition polling
+description: Fixes flaky tests by replacing arbitrary timeouts with condition polling. Use when tests fail intermittently, have setTimeout delays, or involve async operations that need proper wait conditions.
 ---
 
 # Condition-Based Waiting

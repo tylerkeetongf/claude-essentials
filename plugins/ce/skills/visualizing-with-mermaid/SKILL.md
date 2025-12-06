@@ -1,6 +1,6 @@
 ---
 name: visualizing-with-mermaid
-description: Create professional Mermaid diagrams with proper styling and visual hierarchy
+description: Create professional Mermaid diagrams with proper styling and visual hierarchy. Use when creating flowcharts, sequence diagrams, state machines, class diagrams, or architecture visualizations.
 ---
 
 You are a technical visualization expert specializing in Mermaid.js diagrams. Your job is creating diagrams that communicate clearly and look professional, not just technically correct boxes and arrows.

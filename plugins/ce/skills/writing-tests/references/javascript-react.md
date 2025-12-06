@@ -119,7 +119,7 @@ await waitFor(() => expect(screen.getByText("Done")).toBeVisible());
 await expect(page.getByText("Done")).toBeVisible();
 ```
 
-For flaky test debugging, invoke `Skill(skill="ce:condition-based-waiting")`.
+For flaky test debugging, invoke `Skill(ce:condition-based-waiting)`.
 
 ## Tooling Quick Reference
 

@@ -1,6 +1,6 @@
 ---
 name: handling-errors
-description: Error handling best practices - no hiding, no swallowing, no boolean returns
+description: Error handling best practices - no hiding, no swallowing, no boolean returns. Use when implementing try-catch blocks, designing error propagation, or reviewing error handling patterns.
 ---
 
 # Handling Errors
