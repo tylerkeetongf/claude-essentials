@@ -114,9 +114,7 @@ CRITICAL: You MUST call Skill() tool in Step 2. Do NOT skip to implementation.
 The evaluation (Step 1) is WORTHLESS unless you ACTIVATE (Step 2) the skills.
 
 Example of correct sequence:
-```
 ${example_block}
-```
 </INSTRUCTION>"
 
     # Escape for JSON - works on both macOS and Linux
