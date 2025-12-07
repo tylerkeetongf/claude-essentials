@@ -300,7 +300,7 @@ Task tool (ce:code-reviewer):
     - Test coverage adequate
     - Merge readiness
 
-    Provide: Summary, any critical issues, recommendations
+    Provide: Summary, any critical issues, recommendations. Only highlight issues, do not output complements. We only care about what needs to be fixed/refactored.
 ```
 
 Fix all issues that are identified
