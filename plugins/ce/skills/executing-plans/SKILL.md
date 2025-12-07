@@ -1,6 +1,6 @@
 ---
 name: executing-plans
-description: Executes implementation plans autonomously with wave-based parallel subagents. Analyzes task dependencies, parallelizes independent work, auto-recovers from errors, and verifies at completion.
+description: Executes implementation plans autonomously with wave-based parallel subagents. Uses complexity tiers to right-size agent dispatch, auto-recovers from errors, and verifies at completion.
 ---
 
 # Executing Plans
@@ -8,6 +8,8 @@ description: Executes implementation plans autonomously with wave-based parallel
 Load plan, analyze dependencies, execute in parallel waves, verify at completion.
 
 **Core principle:** Autonomous execution. Run to completion, only stop for true blockers.
+
+**Efficiency principle:** Dispatch based on task complexity. Simple tasks bundle items for one agent. Standard tasks get dedicated agents with TDD.
 
 ## Plan Loading
 
@@ -17,8 +19,9 @@ Identify and parse the plan:
 
 - User provides path like `./plans/YYYY-MM-DD-feature.md`
 - Parse `### Task N:` sections
-- Extract `**Files:**` blocks for dependency analysis
-- Extract `Run:` commands for verification
+- Extract `**Complexity:**` to determine dispatch strategy (Simple vs Standard)
+- Extract `**Context:**` blocks for file dependencies
+- Extract `**Verify:**` commands for verification
 
 **Multi-file plans** (folder structure):
 
@@ -40,11 +43,11 @@ Create TodoWrite with all parsed tasks before execution.
 
 ## Dependency Analysis
 
-Analyze file overlap to group tasks into execution waves.
+Analyze file overlap to group tasks into execution waves. Items within a task execute sequentially by one agent.
 
 **Tasks are independent (same wave) when:**
 
-- No overlapping file paths (create/modify/test)
+- No overlapping file paths in their Context blocks
 - Different subsystems (different top-level directories)
 - No explicit ordering in plan
 
@@ -58,49 +61,68 @@ Analyze file overlap to group tasks into execution waves.
 **Example wave computation:**
 
 ```
-Task 1: Create src/utils/formatter.ts
-Task 2: Create src/utils/validator.ts
-Task 3: Modify src/api/handler.ts (imports formatter, validator)
-Task 4: Create tests/api/handler.test.ts
+Task 1 (Simple): API Types Setup - 3 items bundled
+Task 2 (Simple): Config Constants - 2 items bundled
+Task 3 (Standard): Retry Logic - TDD cycle
+Task 4 (Standard): Handler Tests - TDD cycle
 
-Wave 1: [Task 1, Task 2]  <- parallel, no overlap
-Wave 2: [Task 3]          <- depends on wave 1
-Wave 3: [Task 4]          <- depends on wave 2
+Wave 1: [Task 1, Task 2]  <- parallel, independent Simple tasks
+Wave 2: [Task 3]          <- depends on types from Task 1
+Wave 3: [Task 4]          <- depends on implementation from Task 3
 ```
 
 If dependency analysis is unclear, ask before proceeding.
 
 ## Wave Execution
 
-For each wave, dispatch all tasks in parallel using multiple Task tool calls in a single message:
+For each wave, dispatch all tasks in parallel using multiple Task tool calls in a single message. Use the appropriate agent based on complexity tier.
 
 ```
-# Wave 1 - dispatch simultaneously
-Task tool (general-purpose):
-  description: "Implement Task 1: Create formatter utility"
+# Wave 1 - dispatch based on complexity
+
+# Simple task: ce:haiku handles all bundled items
+Task tool (ce:haiku):
+  description: "Task 1: API Types Setup"
   prompt: |
-    You are implementing Task 1 from [plan-file].
+    Execute Task 1 from [plan-file].
 
-    Read the task details. Your job:
-    1. Implement exactly what the task specifies
-    2. Write tests if task includes them
-    3. Run verification commands from the plan
-    4. Commit your work with descriptive message
+    Complexity: Simple (bundled items)
 
-    Scope: src/utils/formatter.ts only
-    Constraints: Do NOT modify files outside your scope
+    Context (read first):
+    - src/types/index.ts
+    - src/api/client.ts
 
-    Report back:
-    - What you implemented
-    - Files changed
-    - Verification output
-    - Any issues encountered
+    Complete ALL items in order:
+    1. Create src/types/api-responses.ts with ApiResponse<T> interface
+    2. Export ApiResponse from src/types/index.ts
+    3. Add ResponseStatus enum to api-responses.ts
 
+    Verify: npm run typecheck
+    Commit when complete: /ce:commit
+
+    Report: Files changed, verification output
+
+# Standard task: general-purpose handles TDD cycle
 Task tool (general-purpose):
-  description: "Implement Task 2: Create validator utility"
+  description: "Task 3: Retry Logic"
   prompt: |
-    You are implementing Task 2 from [plan-file].
-    [same structure, different scope]
+    Execute Task 3 from [plan-file].
+
+    Complexity: Standard (TDD required)
+
+    Context (read first):
+    - src/api/client.ts
+    - tests/api/client.test.ts
+
+    Follow TDD cycle:
+    1. Red: Write failing test for retry behavior
+    2. Green: Implement minimal retry logic
+    3. Refactor: Clean up, run lint
+
+    Verify: npm test -- tests/api/client.test.ts
+    Commit when complete: /ce:commit
+
+    Report: Test results, implementation summary, files changed
 ```
 
 Wait for all parallel tasks to complete. Mark completed in TodoWrite. Proceed to next wave.
@@ -203,40 +225,26 @@ Not every multi-task situation benefits from parallel agents:
 
 ### Agent Selection
 
-Choose the right agent type based on task complexity:
+Agent selection is driven by the task's complexity tier from the plan:
 
-**Use `ce:haiku` (Haiku) when:**
+| Complexity | Agent | Dispatch Pattern |
+|------------|-------|------------------|
+| Simple | ce:haiku | All bundled items in one call |
+| Standard | general-purpose | Full TDD cycle in one call |
 
-- Task is purely mechanical with no judgment needed
-- Instructions are complete and unambiguous
-- Single file scope with clear inputs/outputs
-- Examples: creating boilerplate from a template, running predefined commands, simple additions with exact specs provided
+**Simple tasks (ce:haiku):**
+- Multiple bundled items executed sequentially
+- No judgment needed - just follow the checklist
+- Single verification at end of all items
+- One commit for the whole task
 
-**Use `general-purpose` when:**
+**Standard tasks (general-purpose):**
+- Full TDD cycle: Red → Green → Refactor
+- May need to make implementation decisions
+- Verification at each TDD step
+- One commit after refactor
 
-- Task requires investigation or exploration
-- Implementation approach isn't fully specified
-- Task might encounter unexpected issues needing judgment
-- Multiple files with potential interdependencies
-- Examples: implementing features, fixing bugs, tasks requiring test verification
-
-```
-# Mixed agent example
-Task tool (ce:haiku):
-  description: "Create config file"
-  prompt: |
-    Create src/config/defaults.ts with this exact content:
-    export const DEFAULTS = { timeout: 5000, retries: 3 };
-
-Task tool (general-purpose):
-  description: "Implement retry logic"
-  prompt: |
-    Implement retry logic in src/api/client.ts using the config.
-    Handle edge cases appropriately.
-    Write tests for retry behavior.
-```
-
-The heuristic: if the task needs thinking, use general-purpose. If it's copy-paste with a destination, use ce:haiku.
+**The heuristic:** Look at `**Complexity:**` in the task. If it says Simple, use haiku. If it says Standard, use general-purpose. If it's missing, infer from structure: checklist of items = Simple, TDD steps = Standard.
 
 ## Auto-Recovery
 
@@ -349,15 +357,18 @@ Fix all issues that are identified
 
 ## Quick Reference
 
-| Aspect            | Approach                                                                    |
-| ----------------- | --------------------------------------------------------------------------- |
-| Agent selection   | ce:haiku for mechanical tasks, general-purpose for judgment-requiring tasks |
-| Parallelization   | Independent tasks in same wave, independent phases in parallel              |
-| Review timing     | Single final review at completion                                           |
-| Human checkpoints | None until final verification                                               |
-| Plan formats      | Single-file, multi-file (folder), or current session plan-mode              |
-| Multi-file plans  | Execute phases sequentially, update README.md status after each             |
-| Error handling    | Auto-recover, stop only for blockers                                        |
+| Aspect | Approach |
+|--------|----------|
+| Simple tasks | ce:haiku - all bundled items in one dispatch |
+| Standard tasks | general-purpose - full TDD cycle in one dispatch |
+| Parallelization | Independent tasks in same wave, items within task are sequential |
+| Review timing | Single final review at completion |
+| Human checkpoints | None until final verification |
+| Plan formats | Single-file, multi-file (folder), or current session plan-mode |
+| Multi-file plans | Execute phases sequentially, update README.md status after each |
+| Error handling | Auto-recover, stop only for blockers |
+
+**Token efficiency:** Each subagent costs ~800-1000 tokens overhead. Bundling 5 items into one Simple task saves ~4000 tokens vs separate dispatch.
 
 ## Integration
 

@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-description: Create comprehensive, context-aware implementation plans using TDD and Spec-Driven patterns
+description: Create comprehensive, context-aware implementation plans with right-sized tasks. Uses complexity tiers to balance efficiency with parallelization.
 ---
 
 # Writing Plans
@@ -10,6 +10,27 @@ Write detailed, step-by-step implementation plans designed for an agentic coding
 **Save plans to:** `./plans/YYYY-MM-DD-<feature-name>.md`
 
 **For large plans (1000+ lines):** Split into multiple files within a folder at `./plans/YYYY-MM-DD-<feature-name>/` (see "Multi-File Plan Structure" section below)
+
+## Task Sizing Guidelines
+
+Tasks fall into complexity tiers that determine their structure and how they're executed:
+
+| Tier | Effort | Examples | Structure | Agent |
+|------|--------|----------|-----------|-------|
+| Simple | 1-5 min | Config changes, type definitions, exports, renames | Checklist of items | ce:haiku |
+| Standard | 15-60 min | Feature with tests, bug fix, component | Full TDD cycle | general-purpose |
+| Complex | 1+ hours | Multi-component feature, large refactor | Break into Standard tasks | - |
+
+**Decision tree:**
+- Is it a single-line or purely mechanical change? → **Simple** (bundle with related items)
+- Does it need new tests written? → **Standard** (use TDD structure)
+- Will it take more than an hour? → **Break it down** into Standard tasks
+
+**Bundling simple tasks:**
+Group 3-7 related simple items into one task. They should share context (same subsystem, same purpose). Don't bundle unrelated items just because they're small.
+
+**Good bundle:** "Add API response types" - create interface, add enum, export from index
+**Bad bundle:** "Misc cleanup" - add type, fix README typo, update version - these share no context
 
 ## Plan Document Structure
 
@@ -49,38 +70,58 @@ load Skill(command=<a relevant skill related to the task>)
 
 ## 4. Implementation Tasks
 
-### Task [N]: [Component/Feature Name]
-
-**Goal:** [Brief description of what this specific task achieves]
-
-**Relevant Files:**
-
-- `src/path/to/file.ts`
-- `tests/path/to/file.test.ts`
-
-**Step 1: TDD - Red (Failing Test)**
-
-- [ ] Create/Modify test file: `tests/path/to/file.test.ts`
-- [ ] Add test case: `it('should [expected behavior]...')`
-- [ ] **VERIFY:** Run `npm test -- tests/path/to/file.test.ts`
-  - _Expected Output:_ `FAIL` (ReferenceError or expectation mismatch)
-
-**Step 2: TDD - Green (Minimal Implementation)**
-
-- [ ] Create/Modify source file: `src/path/to/file.ts`
-- [ ] Implement minimal code to satisfy the test.
-- [ ] **VERIFY:** @example Run `yarn test -- tests/path/to/file.test.ts`
-  - _Expected Output:_ `PASS`
-
-**Step 3: Refactor & Integration**
-
-- [ ] Optimize code if necessary (clean up types, remove hardcoding).
-- [ ] Run linter: @example `yarn lint`
-- [ ] **COMMIT:** use the `/ce:commit` command
+Tasks are structured based on their complexity tier. Use the right format for each.
 
 ---
 
-### Task [N+1]: [Next Component]
+### Simple Task Format
+
+Use for mechanical changes that don't need TDD. Bundle related items together.
+
+```markdown
+### Task [N]: [Descriptive Name]
+**Complexity:** Simple
+
+**Context:** `src/types/`, `src/api/client.ts`
+
+**Items:**
+1. [ ] Create `src/types/api-responses.ts` with `ApiResponse<T>` interface
+2. [ ] Export `ApiResponse` from `src/types/index.ts`
+3. [ ] Add `ResponseStatus` enum to `src/types/api-responses.ts`
+
+**Verify:** `npm run typecheck`
+**Commit:** `/ce:commit`
+```
+
+---
+
+### Standard Task Format
+
+Use for features requiring implementation decisions and tests.
+
+```markdown
+### Task [N]: [Feature Name]
+**Complexity:** Standard
+
+**Context:** `src/api/client.ts`, `tests/api/client.test.ts`
+
+**Red (Failing Test):**
+- [ ] Add test: `it('should retry failed requests up to 3 times')`
+- [ ] **Verify:** `npm test -- tests/api/client.test.ts` → FAIL
+
+**Green (Implementation):**
+- [ ] Implement retry logic in `fetchWithRetry()` function
+- [ ] **Verify:** `npm test -- tests/api/client.test.ts` → PASS
+
+**Refactor:**
+- [ ] Extract retry config to constants
+- [ ] Run linter: `npm run lint`
+- [ ] **Commit:** `/ce:commit`
+```
+
+---
+
+### Task [N+1]: [Next Task]
 
 ...
 
@@ -88,10 +129,12 @@ load Skill(command=<a relevant skill related to the task>)
 
 ## Best Practices for Plan Generation
 
-1.  **Explicit file paths:** Never say "create a utility." Say "create `src/utils/string-helpers.ts`."
-2.  **One-shot context:** The "Context Loading" section is vital. It tells the implementing agent *exactly* what to read so it doesn't waste tokens searching the file tree.
-3.  **Verification is mandatory:** Every code change must have a corresponding CLI command to verify it (test, lint, etc).
-4.  **Atomic Commits:** Each task ends with a commit. This creates save points.
+1.  **Right-size tasks:** Match structure to complexity. Don't force TDD on config changes; don't bundle unrelated items.
+2.  **Explicit file paths:** Never say "create a utility." Say "create `src/utils/string-helpers.ts`."
+3.  **One-shot context:** The "Context" field per task tells the agent exactly what to read. Don't make agents search.
+4.  **Verification is mandatory:** Every task ends with a verify command (test, typecheck, lint).
+5.  **Commits per task:** Each task ends with a commit, not each item within a task. This creates meaningful save points.
+6.  **Bundle by context:** Group simple items that share understanding (same subsystem, same purpose). 3-7 items is the sweet spot.
 
 ## Multi-File Plan Structure
 
@@ -172,10 +215,12 @@ read src/specific/to/this/phase.ts
 ## Tasks
 
 ### Task N.1: [Component Name]
-[Standard TDD task format...]
+**Complexity:** Simple | Standard
+[Use appropriate format based on complexity tier...]
 
 ### Task N.2: [Next Component]
-[Standard TDD task format...]
+**Complexity:** Simple | Standard
+[Use appropriate format...]
 ```
 
 **When to split:**
@@ -215,8 +260,9 @@ read src/specific/to/this/phase.ts
 ```
 
 ### Explanation of Design Decisions
-1.  **Folder Convention (`./plans/`)**: Moving plans to a dedicated directory prevents clutter in the root and makes it easier to `.gitignore` or organize planning documents.
-2.  **Context Loading Section**: This is the single biggest quality-of-life improvement for Claude Code. By explicitly listing `glob` and `read` commands, you allow the executing agent to hydrate its context immediately without hallucinating file structures.
-3.  **Status & Metadata**: Added a header block for status. This is useful when you pause and resume sessions; the agent can read the status line to know where it left off.
-4.  **Split Verification**: The original "Step 1" combined writing and running. Splitting them forces the agent to *stop* and actually run the command, which catches environment issues (like missing dependencies) before code is written.
-5.  **Multi-File Plans**: Large plans (1000+ lines) get unwieldy in a single file. Breaking them into phases with a central README provides: clear progress tracking at the phase level, ability to work on phases independently, reduced cognitive load when reading any single document, and natural parallelization boundaries for team work.
+1.  **Complexity Tiers**: Not all tasks need TDD. Simple mechanical changes (add a type, export something) waste tokens when forced through Red/Green/Refactor. Tiers let you match structure to the work.
+2.  **Task Bundling**: Each subagent costs ~800-1000 tokens overhead. Bundling 5 simple items into one task saves ~4000 tokens vs dispatching them separately.
+3.  **Folder Convention (`./plans/`)**: Moving plans to a dedicated directory prevents clutter in the root and makes it easier to `.gitignore` or organize planning documents.
+4.  **Context Loading Section**: This is the single biggest quality-of-life improvement for Claude Code. By explicitly listing `glob` and `read` commands, you allow the executing agent to hydrate its context immediately without hallucinating file structures.
+5.  **Status & Metadata**: Added a header block for status. This is useful when you pause and resume sessions; the agent can read the status line to know where it left off.
+6.  **Multi-File Plans**: Large plans (1000+ lines) get unwieldy in a single file. Breaking them into phases with a central README provides: clear progress tracking at the phase level, ability to work on phases independently, reduced cognitive load when reading any single document, and natural parallelization boundaries for team work.
