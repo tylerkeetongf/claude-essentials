@@ -365,5 +365,6 @@ Fix all issues that are identified
 
 **Complementary:**
 
-- `Skill(ce:writing-tests)` for TDD during task execution
+- `Skill(ce:writing-tests)` for test writing tasks - use when plan includes test creation
+- `Skill(ce:documenting-systems)` for documentation tasks - use when plan includes README, API docs, or technical documentation
 - `Skill(ce:verification-before-completion)` for final verification patterns

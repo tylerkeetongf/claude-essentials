@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # SessionStart hook for injecting skills awareness and activation instructions
 # Skills are loaded on-demand via the Skill tool (progressive disclosure pattern)
+# Updates project CLAUDE.md with available skills (idempotent) so that subagents gain access to the skills list
+# Implements "Diff & Patch" to avoid double-injecting context if CLAUDE.md is already up to date
 
 set -euo pipefail
 
@@ -90,12 +92,18 @@ build_example() {
     echo "[THEN and ONLY THEN start implementation]"
 }
 
-# Output context injection as JSON if skills were found
+# Main logic to check, update, and notify
 if [ -n "$SKILLS_LIST" ]; then
     example_block=$(build_example)
 
-    # Use the stronger instructional format from on-submit.sh with dynamic skills
-    additional_context="<INSTRUCTION>
+    # 1. Prepare content strings
+    START_MARKER="<!-- DYNAMIC_SKILLS_START -->"
+    END_MARKER="<!-- DYNAMIC_SKILLS_END -->"
+
+    # The core content payload
+    INJECTED_CONTENT="### Available Skills (Auto-Generated)
+
+<INSTRUCTION>
 MANDATORY SKILL ACTIVATION SEQUENCE
 
 Step 1 - EVALUATE (do this in your response):
@@ -117,17 +125,64 @@ Example of correct sequence:
 ${example_block}
 </INSTRUCTION>"
 
-    # Escape for JSON - works on both macOS and Linux
-    additional_context=$(printf '%s' "$additional_context" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read())[1:-1])')
+    # 2. Determine paths and flags
+    PROJECT_CLAUDE_MD="${PLUGIN_ROOT}/../../CLAUDE.md"
+    SHOULD_UPDATE=false
 
-    cat <<EOF
+    # 3. Check if file exists and compare content
+    if [ ! -f "$PROJECT_CLAUDE_MD" ]; then
+        # Case A: File doesn't exist - create it
+        echo "# CLAUDE.md" > "$PROJECT_CLAUDE_MD"
+        echo "" >> "$PROJECT_CLAUDE_MD"
+        echo "${START_MARKER}" >> "$PROJECT_CLAUDE_MD"
+        echo "${INJECTED_CONTENT}" >> "$PROJECT_CLAUDE_MD"
+        echo "${END_MARKER}" >> "$PROJECT_CLAUDE_MD"
+        SHOULD_UPDATE=true
+    else
+        # Case B: File exists - check if markers and content match
+        if grep -Fq "$START_MARKER" "$PROJECT_CLAUDE_MD" && grep -Fq "$END_MARKER" "$PROJECT_CLAUDE_MD"; then
+            # Extract current content between markers (handling newlines carefully)
+            # We match strictly what is between the markers
+            EXISTING_CONTENT=$(perl -0777 -ne 'print $1 if /<!-- DYNAMIC_SKILLS_START -->\n?(.*?)\n?<!-- DYNAMIC_SKILLS_END -->/s' "$PROJECT_CLAUDE_MD")
+
+            # Compare. If they differ, we need to update.
+            # Note: We check if strict strings match.
+            if [[ "$EXISTING_CONTENT" != "$INJECTED_CONTENT" ]]; then
+                export CONTENT="$INJECTED_CONTENT"
+                # Update logic: Replace block with fresh content
+                perl -i -0777 -pe 's/(<!-- DYNAMIC_SKILLS_START -->)(.*?)(<!-- DYNAMIC_SKILLS_END -->)/$1\n$ENV{CONTENT}\n$3/s' "$PROJECT_CLAUDE_MD"
+                SHOULD_UPDATE=true
+            fi
+        else
+            # Case C: Markers missing - append them
+            echo "" >> "$PROJECT_CLAUDE_MD"
+            echo "${START_MARKER}" >> "$PROJECT_CLAUDE_MD"
+            echo "${INJECTED_CONTENT}" >> "$PROJECT_CLAUDE_MD"
+            echo "${END_MARKER}" >> "$PROJECT_CLAUDE_MD"
+            SHOULD_UPDATE=true
+        fi
+    fi
+
+    # 4. Conditionally Output JSON
+    # Only output if we updated the file.
+    # If we updated, it means the Main Agent (which loaded the old file) has stale context.
+    # If we didn't update, the Main Agent loaded the correct file, so we stay silent.
+    if [ "$SHOULD_UPDATE" = true ]; then
+        # Add a system notice so Claude knows why this is appearing
+        JSON_TEXT="[SYSTEM UPDATE: Skills list refreshed]
+${INJECTED_CONTENT}"
+
+        json_content=$(printf '%s' "$JSON_TEXT" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read())[1:-1])')
+
+        cat <<EOF
 {
   "hookSpecificOutput": {
     "hookEventName": "SessionStart",
-    "additionalContext": "${additional_context}"
+    "additionalContext": "${json_content}"
   }
 }
 EOF
+    fi
 fi
 
 exit 0
