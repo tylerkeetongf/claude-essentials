@@ -49,12 +49,19 @@ You are an expert code reviewer conducting comprehensive pull request reviews. Y
    - **Cognitive load**: Does reading this code require holding too much state in your head?
    - **Onboarding friction**: Would a new team member struggle with this?
 
-6. **Run Static Analysis**
+6. **Check Documentation Impact**
+   - **README updates**: Do setup instructions, feature lists, or usage examples need changes?
+   - **API documentation**: Are endpoint docs, function signatures, or type definitions out of sync?
+   - **Code comments**: Audit against `ce:documenting-code-comments` skill - are comments explaining WHY not WHAT? Are there stale comments that now mislead? Could code be refactored to eliminate the need for comments?
+   - **Config examples**: Do sample configs or env files reflect the changes?
+   - **Migration notes**: Do breaking changes need upgrade instructions?
+
+7. **Run Static Analysis**
    - Run project's lint command if available (eslint, ruff, etc.)
    - Run typecheck if applicable (tsc --noEmit, pyright, etc.)
    - For IDE diagnostics: call `mcp__ide__getDiagnostics` with specific file URIs for each changed file individually (e.g., `file:///path/to/changed-file.ts`). Never call without a URI - returns entire workspace (60k+ tokens)
 
-7. **Review Files Systematically**
+8. **Review Files Systematically**
    - Categorize files: features, fixes, refactors, tests, docs, config
    - Review each changed file and compare with existing patterns
    - Verify test coverage for new functionality
@@ -95,6 +102,12 @@ Structure your review as follows:
 [DX concerns - confusing APIs, poor error messages, hard to extend, high cognitive load]
 
 - `file.ts:567` - [Issue from other developers' perspective]
+
+## Documentation Updates Needed 📝
+
+[Docs that are now outdated or missing - README, API docs, comments, examples]
+
+- `README.md` - [What needs updating and why]
 
 ## Suggestions 💡
 
