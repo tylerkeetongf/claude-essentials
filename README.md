@@ -70,8 +70,15 @@ Reusable development patterns, accessed with `ce:` prefix:
 | Skill                                                                                | Description                                             |
 | ------------------------------------------------------------------------------------ | ------------------------------------------------------- |
 | [ce:writer](plugins/ce/skills/writer/SKILL.md)                                       | Writing style guide with 6 personas (Engineer, PM, Marketer, Educator, Contributor, UX Writer) |
+| [ce:strategy-writer](plugins/ce/skills/strategy-writer/SKILL.md)                     | Executive-quality strategic documents in Economist/HBR style |
 | [ce:documenting-systems](plugins/ce/skills/documenting-systems/SKILL.md)             | Best practices for writing markdown documentation       |
 | [ce:documenting-code-comments](plugins/ce/skills/documenting-code-comments/SKILL.md) | Standards for self-documenting code and inline comments |
+
+**Data & Infrastructure:**
+
+| Skill                                                                              | Description                            |
+| ---------------------------------------------------------------------------------- | -------------------------------------- |
+| [ce:managing-databases](plugins/ce/skills/managing-databases/SKILL.md)             | PostgreSQL, DuckDB, Parquet, and PGVector architecture |
 
 **Meta Skills:**
 
@@ -83,11 +90,12 @@ Reusable development patterns, accessed with `ce:` prefix:
 
 Expert AI personas for complex work, accessed with `@ce:` prefix:
 
-| Agent                                                   | Description                                        |
-| ------------------------------------------------------- | -------------------------------------------------- |
-| [@ce:code-reviewer](plugins/ce/agents/code-reviewer.md) | Comprehensive PR/MR reviews enforcing standards    |
-| [@ce:haiku](plugins/ce/agents/haiku.md)                 | Lightweight Haiku agent for simple delegated tasks |
-| [@ce:log-reader](plugins/ce/agents/log-reader.md)       | Efficient log file analysis using targeted search  |
+| Agent                                                       | Description                                        |
+| ----------------------------------------------------------- | -------------------------------------------------- |
+| [@ce:code-reviewer](plugins/ce/agents/code-reviewer.md)     | Comprehensive PR/MR reviews enforcing standards    |
+| [@ce:haiku](plugins/ce/agents/haiku.md)                     | Lightweight Haiku agent for simple delegated tasks |
+| [@ce:log-reader](plugins/ce/agents/log-reader.md)           | Efficient log file analysis using targeted search  |
+| [@ce:devils-advocate](plugins/ce/agents/devils-advocate.md) | Rigorous critique to find flaws in plans and designs |
 
 ### Hooks
 
@@ -333,8 +341,8 @@ This will be accessible as `@ce:my-agent`.
         ├── .claude-plugin/
         │   └── plugin.json       # Plugin metadata
         ├── commands/             # 14 commands (/ce:test, /ce:plan, /ce:init, etc.)
-        ├── skills/               # 18 skills (ce:writing-tests, etc.)
-        ├── agents/               # 3 agents (@ce:code-reviewer, @ce:haiku, etc.)
+        ├── skills/               # 20 skills (ce:writing-tests, etc.)
+        ├── agents/               # 4 agents (@ce:code-reviewer, @ce:haiku, etc.)
         └── hooks/                # Session automation
 ```
 
